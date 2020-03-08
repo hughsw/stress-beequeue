@@ -1,8 +1,12 @@
-# Stress BeeQueue
+# Stress Bee-Queue
 
-Docker image for simple, but stressful exercising of the excellent [BeeQueue task queue](https://github.com/bee-queue/bee-queue).
+Docker image for simple, but stressful exercising of the excellent [Bee-Queue task queue](https://github.com/bee-queue/bee-queue).
 
-## Quick Start
+## Reproduce a subtle problem
+
+Bee-Queue occasionally loses track of jobs, and the job does not emit either of the 'succeeded' or 'failed' events even though the job has finished.
+The steps here provide somewhat of a sandbox for diagnosing [this Issue](https://github.com/bee-queue/bee-queue/issues/189).
+See also this [Bee-Queue Issue](https://github.com/bee-queue/bee-queue/issues/78).
 
 All examples assume you're in the directory with this README and the stress-beequeue code.
 Prerequesites include a working Docker installation and bash.
@@ -23,7 +27,7 @@ Successfully tagged stress-beequeue:latest
 ```
 
 
-### Run Redis and the Bee-Queue server
+### Run Redis
 
 > Note: If you already have a Redis server running, skip this step
 
@@ -38,7 +42,9 @@ $ docker run --init --rm -p 6379:6379 -v $(pwd)/redis-data:/data redis:5-alpine
 ... * Ready to accept connections
 ```
 
-In another shell start the BeeQueue server.
+### Run the Bee-Queue server
+
+In another shell start the Bee-Queue server.
 Set `REDIS_HOST` and/or `REDIS_PASSWORD` as necessary to access the Redis server.
 
 ```bash
@@ -46,7 +52,7 @@ $ REDIS_HOST=docker.for.mac.localhost  BEEQUEUE_CONCURRENCY=3 ./run-server
 
 ...
 
-Stress BeeQueue ready: server config: {"concurrency":3}
+Stress Bee-Queue ready: server config: {"concurrency":3}
 ```
 
 ### Run the Bee-Queue client
@@ -70,7 +76,7 @@ Stress BeeQueue ready: client config: {"numChains":4,"interval":500}
 The interesting part is the array of counts (histogram) at the start of each line.
 This shows how many times each of the four job-chains has emitted 'succeeded'.
 It starts off being uniform.
-But, as BeeQueue occasionally loses track of jobs, the bins corresponding to dead chains stop updating.
+But, as Bee-Queue occasionally loses track of jobs, the bins corresponding to dead chains stop updating.
 
 ```bash
 $ REDIS_HOST=docker.for.mac.localhost  BEEQUEUE_NUMCHAINS=4 BEEQUEUE_INTERVAL=500 ./run-client
@@ -108,13 +114,13 @@ Redis
 * `REDIS_HOST` - Hostname of Redis server --  may be a special name if Redis is running in Docker, e.g. `docker.for.mac.localhost`
 * `REDIS_PASSWORD` - Credentials for the Redis server
 
-BeeQueue stress settings
+Bee-Queue stress settings
 
-* `BEEQUEUE_CONCURRENCY` -  The server-side BeeQueue concurrency -- how many jobs are running at the same time.
+* `BEEQUEUE_CONCURRENCY` -  The server-side Bee-Queue concurrency -- how many jobs are running at the same time.
 This setting may affect the occurrence of the problem.
 * `BEEQUEUE_NUMCHAINS` - The client-side number of job chains to start.
 A chain is a sequence of jobs whereby when a job emits 'succeeded' or 'failed', a new job is created.
-If BeeQueue did not lose jobs, each chain would run indefinitely.
+If Bee-Queue did not lose jobs, each chain would run indefinitely.
 This setting may affect the occurrence of the problem.
 * `BEEQUEUE_INTERVAL` - Client side count of number of 'succeeded' events between reporting summary statistics.
 This is simply to control how rapidly info scrolls.
@@ -123,4 +129,4 @@ This is simply to control how rapidly info scrolls.
 ## Details
 
 * Read the client-side code in [./src/client-side.ts](./src/client-side.ts)
-* Read the BeeQueue configuratio code in [./src/stress-beequeue.ts](./src/stress-beequeue.ts)
+* Read the Bee-Queue configuration code in [./src/stress-beequeue.ts](./src/stress-beequeue.ts)

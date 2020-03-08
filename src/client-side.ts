@@ -25,7 +25,7 @@ export const runJobs = async ({queue, numChains, interval}) => {
     const job = queue.createJob({ failme: false });
 
     // chain: succeeded and failed will each create a new job with the same chainIndex
-    job.on('succeeded', (result:any) => {
+    job.on('succeeded', async (result:any) => {
       debug && log(`JOB succeeded: chainIndex: ${chainIndex}, queue.name: ${queue.name}, job.id: ${job.id}, succeeded with result: ${JSON.stringify(result)}`);
       ++numSucceeded;
       ++histogram[chainIndex];
@@ -40,7 +40,7 @@ export const runJobs = async ({queue, numChains, interval}) => {
       setTimeout(runJob, 0, chainIndex);
     });
 
-    job.on('failed', (err:any) => {
+    job.on('failed', async (err:any) => {
       log(`JOB failed: chainIndex: ${chainIndex}, queue.name: ${queue.name}, job.id: ${job.id}, failed with error ${err.message}`);
       ++numFailed;
       // never break the chain

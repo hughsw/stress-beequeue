@@ -15,7 +15,7 @@ import { debug, log } from './log';
 
 
 // Configuration via env vars
-const numberOr = (obj:any, defaultNum:number):number => isNaN(+obj) ? defaultNum : +obj;
+const numberOr = (obj:any, defaultNum:number):number => Math.max(isNaN(+obj) ? 0 : +obj, defaultNum);
 
 // Redis connection
 const host = process.env.REDIS_HOST || undefined;
