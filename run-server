@@ -1,0 +1,18 @@
+#!/bin/bash -eu
+
+# Fail loudly
+set -euo pipefail
+trap 'rc=$?;set +ex;if [[ $rc -ne 0 ]];then trap - ERR EXIT;echo 1>&2;echo "*** fail *** : code $rc : $DIR/$SCRIPT $ARGS" 1>&2;echo 1>&2;exit $rc;fi' ERR EXIT
+ARGS="$*"
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT="$(basename "${BASH_SOURCE[0]}")"
+
+imageTag=$(basename $DIR)
+
+set -x
+
+docker run --init -it --rm \
+       --env REDIS_HOST=${REDIS_HOST:-} \
+       --env REDIS_PASSWORD=${REDIS_PASSWORD:-} \
+       --env BEEQUEUE_CONCURRENCY=${BEEQUEUE_CONCURRENCY:-} \
+       $imageTag "$@"

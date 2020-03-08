@@ -1,0 +1,22 @@
+{
+  "name": "stress-beequeue",
+  "version": "1.0.0",
+  "description": "Stressful use of BeeQueue",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [
+    "bee-queue",
+    "BeeQueue"
+  ],
+  "author": "Hugh Secker-Walker",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "bee-queue": "1.2.3",
+    "redis": "3.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "13.9.0",
+    "@types/typescript": "2.0.0"
+  }
+}
