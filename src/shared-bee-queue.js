@@ -1,3 +1,7 @@
+// Shared code and the trivial server/worker
+//
+// Client module file is named via process.env.BEEQUEUE_CLIENT
+
 const { createClient } =  require('redis');
 const BeeQueue = require('bee-queue');
 
@@ -52,8 +56,8 @@ const startBeequeue = async (redisClient, queueConfig) => {
     prefix: 'ccd',
     isWorker,
     activateDelayedJobs: isWorker,
-    //removeOnFailure: true,
-    //removeOnSuccess: true,
+    removeOnFailure: true,
+    removeOnSuccess: true,
     getEvents: isClient,
   };
 
@@ -79,9 +83,9 @@ const startBeequeue = async (redisClient, queueConfig) => {
 
   // Fan out to the client or server logic
   if (side === 'client') {
-    //log('process.env.BEEQUEUE_CLIENT:', JSON.stringify(process.env.BEEQUEUE_CLIENT));
+    // User-selected client module
     const { doClientQueue } = require('./' + process.env.BEEQUEUE_CLIENT);
-    //const { doClientQueue } = require('./' + 'chainClient');
+
     doClientQueue({queue, verbose, numChains, interval, randomDelay});
   } else {
     doServerQueue({queue, verbose, concurrency, randomDelay});
@@ -95,7 +99,6 @@ const doServerQueue = ({queue, verbose, concurrency, randomDelay}) => {
   queue.process(concurrency, makeWorker({verbose, randomDelay}));
 };
 
-
 // Fast worker that yields at least once
 const makeWorker = ({verbose, randomDelay}) => async job => {
   const { id, data } = job;
@@ -107,45 +110,6 @@ const makeWorker = ({verbose, randomDelay}) => async job => {
   if (data.failme) throw new Error(`failme job.id ${id}`);
   return { data };
 };
-
-/*
-// Simple worker, does very little work, but yields at least once
-const workerProcess = async job => {
-  const { id, data } = job;
-//  log(`workerProcess: job.id: ${id}, data: ${JSON.stringify(data)}`);
-  //logJob('workerProcess', job);
-  await delay(0);
-  if (data.failme) throw new Error(`failme job.id ${id}`);
-  await delay(Math.floor(Math.random() * randomDelay));
-  return { data };
-};
-//*/
-
-/*
-// Simple worker, does very little work, but yields a few times
-const workerProcess = async job => {
-  //logJob('workerProcess', job);
-  const { id, data } = job;
-  //debug && log(`workerProcess: job.id: ${id}`);
-  const result = await latencyDude(data);
-  if (data.failme) throw new Error(`failme job.id ${id}`);
-  return { data, result };
-};
-
-// Helper for the worker
-const latencyDude = async data => {
-  const startTime = Date.now();
-  // do something
-  const content = JSON.parse(JSON.stringify(data));
-  await new Promise(resolve => resolve(content));
-  await delay(Math.floor(Math.random() * randomDelay));
-
-  return {
-    content,
-    latencyMsec: Date.now() - startTime,
-  };
-};
-//*/
 
 // Mostly shared code and config for each instance
 const start = async side => {
@@ -171,18 +135,6 @@ const start = async side => {
 // Fan into the start() choke point
 const startClient = () => start('client');
 const startServer = () => start('server');
-
-/*
-const startClient = () => {
-  log('startClient()');
-  return start('client');
-};
-
-const startServer = () => {
-  log('startServer()');
-  return start('server');
-};
-*/
 
 module.exports = exports = {
   startClient,

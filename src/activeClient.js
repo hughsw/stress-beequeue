@@ -1,7 +1,3 @@
-// BeeQueue client that creates persistent chains
-// Each 'succeeded' or 'failed' event from a chain job creates a new job in that chain
-// Demonstrates that those two callbacks are not always called, so the chains die out.
-// Not a good way to demonstrate the problem, but one that emerged from our code.
 
 const {
   safeNumber,
@@ -27,7 +23,7 @@ let queueNumFailed = 0;
 
 // Client-side Queue.createJob()
 const doClientQueue = async ({queue, verbose, numChains, randomDelay, interval}) => {
-  log(`doClientQueue: chainClient: numChains: ${numChains}, randomDelay: ${randomDelay}`);
+  log(`doClientQueue: activeClient: numChains: ${numChains}, randomDelay: ${randomDelay}`);
 
   queue.on('job succeeded', async (jobId, result) => {
   //queue.on('succeeded', async (job, result) => {
@@ -59,12 +55,23 @@ const doClientQueue = async ({queue, verbose, numChains, randomDelay, interval})
     //setTimeout(startJobChain, 0, queue);
   });
 
-//debug && log(`QUEUE ${beequeueName} succeeded: Job ${job.id} succeeded with result: ${JSON.stringify(result)}`));
-  // queue.on('failed', (job:any, err:any) => debug && log(`QUEUE ${beequeueName} failed: Job ${job.id} failed with error '${err.message}', and retries ${job.options.retries}, status ${job.status}`));
-
-  for (let chain = 0; chain < numChains; ++chain) {
-    startJobChain({queue, chain, verbose, randomDelay, interval});
+  // check number of active jobs and start more as needed
+  let numChainsStarted = 0;
+  const doCheck = async () => {
+    const health = await queue.checkHealth();
+    let { active } = health;
+    log(`health: ${JSON.stringify(health)}, deficit: ${numChains - active}`);
+    while (active++ < numChains) {
+      startJobChain({queue, chain: 0, verbose, randomDelay, interval});
+      ++numChainsStarted;
+    }
+    log('numChainsStarted:', numChainsStarted);
   }
+  setInterval(doCheck, 3000);
+
+//  for (let chain = 0; chain < numChains; ++chain) {
+//    startJobChain({queue, chain, verbose, randomDelay, interval});
+//  }
 };
 
 const startJobChain = async ({queue, chain, verbose, randomDelay, interval}) => {
@@ -72,10 +79,12 @@ const startJobChain = async ({queue, chain, verbose, randomDelay, interval}) => 
   const jobNumber = ++globalJobNumber;
 
   if (jobNumber % interval === 0) {
+    /*
     const maxSucceeded = Math.max(...succeededHistogram);
     const succeededDiffs = succeededHistogram.map(x => maxSucceeded - x);
     const maxFailed = Math.max(...failedHistogram);
     const failedDiffs = failedHistogram.map(x => maxFailed - x);
+    //*/
 
     const missingSucceeded = queueNumSucceeded - numJobSucceeded;
     const missingFailed = queueNumFailed - numJobFailed;
@@ -87,10 +96,10 @@ const startJobChain = async ({queue, chain, verbose, randomDelay, interval}) => 
     //log(`jobNumber: ${jobNumber}, counts: ${JSON.stringify(counts)}, health: ${JSON.stringify(health)}`);
     //await log(`jobNumber: ${jobNumber}, counts: ${JSON.stringify(counts)}, health: ${JSON.stringify(health)}`);
     //await log(`jobNumber: ${jobNumber}, succeededHistogram: ${JSON.stringify(succeededHistogram)}`);
-    await log(`jobNumber: ${jobNumber}, succeededDiffs: ${JSON.stringify(succeededDiffs)}`);
+    //await log(`jobNumber: ${jobNumber}, succeededDiffs: ${JSON.stringify(succeededDiffs)}`);
     //await log(`jobNumber: ${jobNumber}, failedHistogram: ${JSON.stringify(failedHistogram)}`);
     //await log(`jobNumber: ${jobNumber}, failedDiffs: ${JSON.stringify(failedDiffs)}`);
-    await log(`jobNumber: ${jobNumber}, health: ${JSON.stringify(health)}`);
+    //await log(`jobNumber: ${jobNumber}, health: ${JSON.stringify(health)}`);
 
   }
 
