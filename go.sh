@@ -7,9 +7,14 @@ ARGS="$*"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT="$(basename "${BASH_SOURCE[0]}")"
 
+client=$1
+
 imageTag=$(basename $DIR)
 
 cd $DIR
+
+# Fail-fast on client module
+node --check src/$client.js
 
 set -x
 
@@ -23,6 +28,6 @@ mkdir -p redisData
 docker build --tag $imageTag --file Dockerfile .
 
 #docker-compose up --force-recreate  --abort-on-container-exit --timeout 7
-docker-compose up  --scale server=3 --force-recreate --remove-orphans  --timeout 3
+eval BEEQUEUE_CLIENT=$client docker-compose up  --scale server=2 --force-recreate --remove-orphans  --abort-on-container-exit  --timeout 3
 
 set +x

@@ -7,10 +7,17 @@ services:
     image: stress-beequeue
     command: node src/client.js
     environment:
-      REDIS_HOST: redis
-      BEEQUEUE_NUMCHAINS: '23'
-      BEEQUEUE_INTERVAL: '500'
-      BEEQUEUE_RANDOM_DELAY: '15'
+    - REDIS_HOST=redis
+    - BEEQUEUE_NUMCHAINS=23
+    - BEEQUEUE_INTERVAL=500
+    - BEEQUEUE_RANDOM_DELAY=15
+    - BEEQUEUE_CLIENT
+
+#    environment:
+#      REDIS_HOST: redis
+#      BEEQUEUE_NUMCHAINS: '23'
+#      BEEQUEUE_INTERVAL: '500'
+#      BEEQUEUE_RANDOM_DELAY: '15'
 
   # bee-queue Queue.process()
   server:
