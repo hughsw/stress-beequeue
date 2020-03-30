@@ -1,0 +1,26 @@
+version: '3.7'
+
+services:
+
+  # bee-queue Queue.createJob()
+  client:
+    image: stress-beequeue
+    command: node src/client.js
+    environment:
+      REDIS_HOST: redis
+      BEEQUEUE_NUMCHAINS: '23'
+      BEEQUEUE_INTERVAL: '500'
+      BEEQUEUE_RANDOM_DELAY: '15'
+
+  # bee-queue Queue.process()
+  server:
+    image: stress-beequeue
+    environment:
+      REDIS_HOST: redis
+      BEEQUEUE_CONCURRENCY: '7'
+      BEEQUEUE_RANDOM_DELAY: '0'
+
+  redis:
+    image: redis:alpine
+    volumes:
+    - ./redisData:/data

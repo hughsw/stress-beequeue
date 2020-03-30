@@ -1,4 +1,4 @@
 
 import { startServer } from './stress-beequeue';
-console.log('Starting stress-beequeue server');
+console.log('Starting bee-queue server: Queue.process()');
 startServer();
