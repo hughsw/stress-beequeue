@@ -111,19 +111,10 @@ const makeWorker = ({verbose, fastest}) => {
   return async job => {
     //const makeWorker = ({verbose, randomDelay}) => async job => {
     const { id, data } = job;
-    verbose >= 3 && log(`workerProcess: job.id: ${id}, failme: ${data.failme}, delay: ${data.delay}`);
-    /*
-      if (randomDelay && randomDelay > 0) {
-      await delay(Math.floor(Math.random() * randomDelay));
-      }
-    //*/
-
-    if (data.delay && data.delay >= 0) {
+    verbose >= 3 && log(`workerProcess: job.id: ${id}, delay: ${data.delay}, failme: ${data.failme}`);
+    if (data.delay && data.delay > 0) {
       await delay(data.delay);
     }
-//    else {
-//      //await new Promise(resolve => setImmediate(resolve));
-//    }
     if (data.failme) throw new Error(`failme job.id ${id}`);
     return { data };
   }
