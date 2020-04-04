@@ -7,6 +7,7 @@ ARGS="$*"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT="$(basename "${BASH_SOURCE[0]}")"
 
+# Specific client module to exercise, file ./src/$client.js must exist
 client=$1
 
 imageTag=$(basename $DIR)
@@ -21,13 +22,15 @@ set -x
 #docker-compose rm --force redis || true
 #docker volume rm --force  ${imageTag}_redisVolume || true
 
-touch redisData
-rm -r redisData
-mkdir -p redisData
-
 docker build --tag $imageTag --file Dockerfile .
 
+# Establish a clean slate for Redis, see volumes in docker-compose.yml
+redisDataDir=./.redisData
+touch $redisDataDir
+rm -r $redisDataDir
+mkdir -p $redisDataDir
+
 #docker-compose up --force-recreate  --abort-on-container-exit --timeout 7
-eval BEEQUEUE_CLIENT=$client docker-compose up  --scale server=2 --force-recreate --remove-orphans  --abort-on-container-exit  --timeout 3
+eval BEEQUEUE_CLIENT=$client docker-compose up  --scale server=3 --force-recreate --remove-orphans  --abort-on-container-exit  --timeout 3
 
 set +x

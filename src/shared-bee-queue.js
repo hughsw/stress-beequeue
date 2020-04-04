@@ -23,8 +23,9 @@ const makeRedisCallback = ({redisClient, event, side}) => value => {
 
     const queueConfig = {
       side,
-      verbose: 0,
+      verbose: safeNumber(process.env.BEEQUEUE_VERBOSE, 0),
 
+      failPercent: safeNumber(process.env.BEEQUEUE_FAIL_PERCENT, 0),
       randomDelay: safeNumber(process.env.BEEQUEUE_RANDOM_DELAY, 0),
 
       // Client
@@ -36,6 +37,7 @@ const makeRedisCallback = ({redisClient, event, side}) => value => {
 
       // Server/worker
       concurrency: safeNumber(process.env.BEEQUEUE_CONCURRENCY, 1),
+      fastest: !!safeNumber(process.env.BEEQUEUE_FASTEST, 0),
     };
 
     // Start the interesting stuff
@@ -44,7 +46,7 @@ const makeRedisCallback = ({redisClient, event, side}) => value => {
 };
 
 const startBeequeue = async (redisClient, queueConfig) => {
-  const { side, verbose, concurrency, numChains, interval, randomDelay } = queueConfig;
+  const { side, verbose, concurrency, fastest, numChains, interval, failPercent, randomDelay } = queueConfig;
   log(`startBeequeue: ${JSON.stringify(queueConfig)}`);
 
   const beequeueName = 'CCD';
@@ -86,29 +88,45 @@ const startBeequeue = async (redisClient, queueConfig) => {
     // User-selected client module
     const { doClientQueue } = require('./' + process.env.BEEQUEUE_CLIENT);
 
-    doClientQueue({queue, verbose, numChains, interval, randomDelay});
+    doClientQueue({queue, verbose, numChains, interval, failPercent, randomDelay});
   } else {
-    doServerQueue({queue, verbose, concurrency, randomDelay});
+    doServerQueue({queue, verbose, concurrency, fastest});//, randomDelay});
   }
 };
 
 
 // Server-side Queue.process()
-const doServerQueue = ({queue, verbose, concurrency, randomDelay}) => {
+const doServerQueue = ({queue, verbose, concurrency, fastest}) => {
+//const doServerQueue = ({queue, verbose, concurrency, randomDelay}) => {
   log('doServerQueue:');
-  queue.process(concurrency, makeWorker({verbose, randomDelay}));
+  //  queue.process(concurrency, makeWorker({verbose, randomDelay}));
+  queue.process(concurrency, makeWorker({verbose, fastest}));
 };
 
 // Fast worker that yields at least once
-const makeWorker = ({verbose, randomDelay}) => async job => {
-  const { id, data } = job;
-  verbose >= 3 && log(`workerProcess: job.id: ${id}, failme: ${data.failme}`);
-  if (randomDelay && randomDelay > 0) {
-    await delay(Math.floor(Math.random() * randomDelay));
+const makeWorker = ({verbose, fastest}) => {
+  // no delays or failures
+  if (fastest) return async job => ({ data: job.data });
+
+  return async job => {
+    //const makeWorker = ({verbose, randomDelay}) => async job => {
+    const { id, data } = job;
+    verbose >= 3 && log(`workerProcess: job.id: ${id}, failme: ${data.failme}, delay: ${data.delay}`);
+    /*
+      if (randomDelay && randomDelay > 0) {
+      await delay(Math.floor(Math.random() * randomDelay));
+      }
+    //*/
+
+    if (data.delay && data.delay >= 0) {
+      await delay(data.delay);
+    }
+//    else {
+//      //await new Promise(resolve => setImmediate(resolve));
+//    }
+    if (data.failme) throw new Error(`failme job.id ${id}`);
+    return { data };
   }
-  await new Promise(resolve => setImmediate(resolve));
-  if (data.failme) throw new Error(`failme job.id ${id}`);
-  return { data };
 };
 
 // Mostly shared code and config for each instance

@@ -22,8 +22,8 @@ let queueNumSucceeded = 0;
 let queueNumFailed = 0;
 
 // Client-side Queue.createJob()
-const doClientQueue = async ({queue, verbose, numChains, randomDelay, interval}) => {
-  log(`doClientQueue: activeClient: numChains: ${numChains}, randomDelay: ${randomDelay}`);
+const doClientQueue = async ({queue, verbose, numChains, failPercent, randomDelay, interval}) => {
+  log(`doClientQueue: activeClient: numChains: ${numChains}, failPercent: ${failPercent}, randomDelay: ${randomDelay}`);
 
   queue.on('job succeeded', async (jobId, result) => {
   //queue.on('succeeded', async (job, result) => {
@@ -62,7 +62,7 @@ const doClientQueue = async ({queue, verbose, numChains, randomDelay, interval})
     let { active } = health;
     log(`health: ${JSON.stringify(health)}, deficit: ${numChains - active}`);
     while (active++ < numChains) {
-      startJobChain({queue, chain: 0, verbose, randomDelay, interval});
+      startJobChain(queue, {chain: 0, verbose, failPercent, randomDelay, interval});
       ++numChainsStarted;
     }
     log('numChainsStarted:', numChainsStarted);
@@ -74,8 +74,10 @@ const doClientQueue = async ({queue, verbose, numChains, randomDelay, interval})
 //  }
 };
 
-const startJobChain = async ({queue, chain, verbose, randomDelay, interval}) => {
-  verbose >= 2 && log(`startJobChain: ${JSON.stringify({chain, verbose, randomDelay, interval})}`);
+const startJobChain = async (queue, config) => {
+  const { chain, verbose, failPercent, randomDelay, interval } = config;
+  verbose >= 2 && log(`startJobChain: ${JSON.stringify(config)}`);
+  //verbose >= 2 && log(`startJobChain: ${JSON.stringify({chain, verbose, failPercent, randomDelay, interval})}`);
   const jobNumber = ++globalJobNumber;
 
   if (jobNumber % interval === 0) {
@@ -103,10 +105,12 @@ const startJobChain = async ({queue, chain, verbose, randomDelay, interval}) => 
 
   }
 
-  const failme = false;
+  //const failme = false;
   //const failme = jobNumber % 2 === 0;
+  const delay = randomDelay && randomDelay > 0 ? Math.floor(Math.random() * randomDelay) : 0;
+  const failme = failPercent && failPercent > 0 ? Math.random() * 100 < failPercent : false;
 
-  const job = queue.createJob({chain, jobNumber, failme});
+  const job = queue.createJob({chain, jobNumber, delay, failme});
 
   job.on('succeeded', async result => {
     verbose >= 2 && logJob(`job client 'succeeded'`, job);
@@ -114,7 +118,7 @@ const startJobChain = async ({queue, chain, verbose, randomDelay, interval}) => 
     //*
     const chain = job.data.chain;
     ++succeededHistogram[chain];
-    setTimeout(startJobChain, Math.floor(Math.random() * randomDelay), {queue, chain, verbose, randomDelay, interval});
+    setTimeout(startJobChain, Math.floor(Math.random() * randomDelay), queue, {chain, verbose, failPercent, randomDelay, interval});
     //*/
   });
 
@@ -124,7 +128,7 @@ const startJobChain = async ({queue, chain, verbose, randomDelay, interval}) => 
     //*
     const chain = job.data.chain;
     ++failedHistogram[chain];
-    setTimeout(startJobChain, Math.floor(Math.random() * randomDelay), {queue, chain, verbose, randomDelay, interval});
+    setTimeout(startJobChain, Math.floor(Math.random() * randomDelay), queue, {chain, verbose, failPercent, randomDelay, interval});
     //*/
   });
 
