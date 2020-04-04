@@ -8,7 +8,7 @@ services:
     command: node src/client.js
     environment:
     - REDIS_HOST=redis
-    - BEEQUEUE_NUMCHAINS=23
+    - BEEQUEUE_NUMCHAINS=11
     - BEEQUEUE_INTERVAL=500
     #- BEEQUEUE_RANDOM_DELAY=15
     - BEEQUEUE_FAIL_PERCENT=10
@@ -26,7 +26,7 @@ services:
     environment:
     - REDIS_HOST=redis
     - BEEQUEUE_CONCURRENCY=3
-    - BEEQUEUE_FASTEST=1
+    - BEEQUEUE_FASTEST=0
     - BEEQUEUE_VERBOSE=0
 
 #    - BEEQUEUE_RANDOM_DELAY=1
