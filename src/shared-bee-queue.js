@@ -26,6 +26,7 @@ const makeRedisCallback = ({redisClient, event, side}) => value => {
       verbose: safeNumber(process.env.BEEQUEUE_VERBOSE, 0),
 
       failPercent: safeNumber(process.env.BEEQUEUE_FAIL_PERCENT, 0),
+      fixedDelay: safeNumber(process.env.BEEQUEUE_FIXED_DELAY, 0),
       randomDelay: safeNumber(process.env.BEEQUEUE_RANDOM_DELAY, 0),
 
       // Client
@@ -46,7 +47,7 @@ const makeRedisCallback = ({redisClient, event, side}) => value => {
 };
 
 const startBeequeue = async (redisClient, queueConfig) => {
-  const { side, verbose, concurrency, fastest, numChains, interval, failPercent, randomDelay } = queueConfig;
+  const { side, verbose, concurrency, fastest, numChains, interval, failPercent, fixedDelay, randomDelay } = queueConfig;
   log(`startBeequeue: ${JSON.stringify(queueConfig)}`);
 
   const beequeueName = 'CCD';
@@ -90,7 +91,7 @@ const startBeequeue = async (redisClient, queueConfig) => {
     // User-selected client module
     const { doClientQueue } = require('./' + process.env.BEEQUEUE_CLIENT);
 
-    doClientQueue({queue, verbose, numChains, interval, failPercent, randomDelay});
+    doClientQueue({queue, verbose, numChains, interval, failPercent, fixedDelay, randomDelay});
   } else {
     doServerQueue({queue, verbose, concurrency, fastest});//, randomDelay});
   }
