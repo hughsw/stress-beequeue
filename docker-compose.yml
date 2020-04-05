@@ -8,10 +8,12 @@ services:
     command: node src/client.js
     environment:
     - REDIS_HOST=redis
-    - BEEQUEUE_NUMCHAINS=11
+    - BEEQUEUE_NUMCHAINS=6
     - BEEQUEUE_INTERVAL=500
-    #- BEEQUEUE_RANDOM_DELAY=15
-    - BEEQUEUE_FAIL_PERCENT=10
+    - BEEQUEUE_RANDOM_DELAY=2
+    - BEEQUEUE_FAIL_PERCENT=50
+    - BEEQUEUE_VERBOSE=3
+    # Pass through to select client module
     - BEEQUEUE_CLIENT
 
 #    environment:

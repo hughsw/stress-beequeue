@@ -58,9 +58,11 @@ const startBeequeue = async (redisClient, queueConfig) => {
     prefix: 'ccd',
     isWorker,
     activateDelayedJobs: isWorker,
-    removeOnFailure: true,
-    removeOnSuccess: true,
+    //removeOnFailure: true,
+    //removeOnSuccess: true,
     getEvents: isClient,
+    sendEvents: isWorker,
+    storeJobs: isClient,
   };
 
   const queue = new BeeQueue(beequeueName, beequeueOptions);
