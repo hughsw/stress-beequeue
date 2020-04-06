@@ -12,13 +12,13 @@ const numChains2 = safeNumber(process.env.BEEQUEUE_NUMCHAINS, 1);
 
 const inPlay = {};
 const toggleInPlay = key => {
+  return;
   if (inPlay[key]) delete inPlay[key];
   else inPlay[key] = true;
 };
 
 // Client-side Queue.createJob()
 const doClientQueue = async ({queue, verbose, numChains, failPercent, fixedDelay, randomDelay, interval}) => {
-//  const startTime =
 
   const maxNumChains = numChains;
 
@@ -56,8 +56,9 @@ const doClientQueue = async ({queue, verbose, numChains, failPercent, fixedDelay
   const jobFinished = async jobId => {
     toggleInPlay(jobId);
     const job = await queue.getJob(jobId);
-    queue.removeJob(jobId);
     adjustChains(job.data.chain);
+    queue.removeJob(jobId);
+    //job.removeAllListeners();
   };
 
   queue.on('job succeeded', async (jobId, result) => {
@@ -104,16 +105,22 @@ const doClientQueue = async ({queue, verbose, numChains, failPercent, fixedDelay
   };
 
   statReset();
-  //setInterval(statSample, 16);
+  setInterval(statSample, 16);
 
   const sampleMsec = 3000;
 
   const doCheck = async () => {
+    await log(JSON.stringify(stats));
+    return;
+
     const startTime = Date.now();
     const startStats = { ...stats };
     await delay(sampleMsec);
     const elapsedMsec = Date.now() - startTime;
     const endStats =  { ...stats };
+
+    const health = await queue.checkHealth();
+    await log(`health: ${JSON.stringify(health)}`);
 
     const jobNumber = endStats.globalJobNumber;
     const numChainsRunning = endStats.numChainsRunning;
@@ -205,15 +212,21 @@ const createChainJob = (queue, config, chain) => {
 
   const job = queue.createJob({jobNumber, chain, delay, failme});
 
+  /*
+  const cleanup = () => job.removeAllListeners();
+
   job.on('succeeded', async result => {
     verbose >= 2 && log(`job client 'succeeded': job.id: ${job.id}, job.data: ${JSON.stringify(job.data)}`);
     ++stats.numJobSucceeded;
+    cleanup();
   });
 
   job.on('failed', async error => {
     verbose >= 2 && log(`job client 'failed': job.id: ${job.id}, job.data: ${JSON.stringify(job.data)}`);
     ++stats.numJobFailed;
+    cleanup();
   });
+  //*/
 
   job.save()
     .then(() => {

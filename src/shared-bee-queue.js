@@ -63,7 +63,8 @@ const startBeequeue = async (redisClient, queueConfig) => {
     //removeOnSuccess: true,
     getEvents: isClient,
     sendEvents: isWorker,
-    storeJobs: isClient,
+    //storeJobs: isClient,
+    storeJobs: false,
   };
 
   const queue = new BeeQueue(beequeueName, beequeueOptions);
