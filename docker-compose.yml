@@ -8,14 +8,16 @@ services:
     command: node src/client.js
     environment:
     - REDIS_HOST=redis
-    - BEEQUEUE_NUMCHAINS=6
-    - BEEQUEUE_INTERVAL=500
+    - BEEQUEUE_NUMCHAINS=11
+#    - BEEQUEUE_INTERVAL=500
     - BEEQUEUE_FIXED_DELAY=0
     - BEEQUEUE_RANDOM_DELAY=0
-    - BEEQUEUE_FAIL_PERCENT=50
+    - BEEQUEUE_FAIL_PERCENT=3
     - BEEQUEUE_VERBOSE=0
     # Pass through to select client module
     - BEEQUEUE_CLIENT
+    volumes:
+    - ./logs:/data
 
 #    environment:
 #      REDIS_HOST: redis

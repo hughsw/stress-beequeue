@@ -31,6 +31,6 @@ rm -r $redisDataDir
 mkdir -p $redisDataDir
 
 #docker-compose up --force-recreate  --abort-on-container-exit --timeout 7
-eval BEEQUEUE_CLIENT=$client docker-compose up  --scale server=3 --force-recreate --remove-orphans  --abort-on-container-exit  --timeout 3
+eval BEEQUEUE_CLIENT=$client docker-compose up  --scale server=4 --force-recreate --remove-orphans  --abort-on-container-exit  --timeout 3
 
 set +x
