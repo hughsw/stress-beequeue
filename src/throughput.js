@@ -4,15 +4,15 @@ const {
   safeNumber,
   log,
   delay,
-  logJob,
+//  logJob,
 } = require('./utils');
 
 
-const numChains2 = safeNumber(process.env.BEEQUEUE_NUMCHAINS, 1);
+//const numChains2 = safeNumber(process.env.BEEQUEUE_NUMCHAINS, 1);
 
 const inPlay = {};
 const toggleInPlay = key => {
-  return;
+  //return;
   if (inPlay[key]) delete inPlay[key];
   else inPlay[key] = true;
 };
@@ -58,6 +58,8 @@ const doClientQueue = async ({queue, verbose, numChains, failPercent, fixedDelay
     const job = await queue.getJob(jobId);
     adjustChains(job.data.chain);
     queue.removeJob(jobId);
+    // uuggg -- prevent memory leaks
+    queue.jobs.delete(jobId);
     //job.removeAllListeners();
   };
 
@@ -72,12 +74,6 @@ const doClientQueue = async ({queue, verbose, numChains, failPercent, fixedDelay
   });
 
   adjustChains();
-  /*
-  while (stats.numChainsRunning < numChains) {
-    createChainJob(queue, config, stats.numChainsRunning);
-    ++stats.numChainsRunning;
-  }
-  //*/
 
 
   // check number of active jobs and start more as needed
@@ -110,17 +106,17 @@ const doClientQueue = async ({queue, verbose, numChains, failPercent, fixedDelay
   const sampleMsec = 3000;
 
   const doCheck = async () => {
-    await log(JSON.stringify(stats));
-    return;
+    //await log(JSON.stringify(stats));
+    //return;
 
     const startTime = Date.now();
     const startStats = { ...stats };
+    numChains = 1 + Math.floor(Math.random() * maxNumChains);
     await delay(sampleMsec);
     const elapsedMsec = Date.now() - startTime;
     const endStats =  { ...stats };
 
     const health = await queue.checkHealth();
-    await log(`health: ${JSON.stringify(health)}`);
 
     const jobNumber = endStats.globalJobNumber;
     const numChainsRunning = endStats.numChainsRunning;
@@ -151,55 +147,16 @@ const doClientQueue = async ({queue, verbose, numChains, failPercent, fixedDelay
       concurrency,
       numWorkers,
     };
-    //await log(`jobNumber: ${jobNumber}, numChains: ${numChainsRunning}, elapsedMsec: ${elapsedMsec}, deltaJobNumber: ${deltaJobNumber}, deltaNumFinished: ${deltaNumFinished}, deltaNumLost: ${deltaNumLost}, throughput: ${throughput}, lossPercent: ${lossPercent}`);
     const reportJson = JSON.stringify(report);
+
+    await log(`health: ${JSON.stringify(health)}`);
     await log(reportJson);
+
     appendFile(`/data/${stats.startTime}.json`, reportJson + '\n', log);;
-
-    numChains = 1 + Math.floor(Math.random() * maxNumChains);
-
-    /*
-    log('numChains:', numChains);
-
-    return;
-
-    const numFinished = stats.numQueueJobSucceeded + stats.numQueueJobFailed;
-    const numPlay = jobNumber - numFinished;
-    const numLost = numFinished - (stats.numJobSucceeded + stats.numJobFailed);
-    const health = await queue.checkHealth();
-
-    const { waitingAvg, activeAvg } = statAvg();
-    statReset();
-    await log(`jobNumber: ${jobNumber}, numPlay: ${numPlay}, numJobSaveError: ${stats.numJobSaveError}, throughput: ${throughput}, lossPercent: ${lossPercent}, numChainsRunning: ${stats.numChainsRunning}, inPlay: ${Object.keys(inPlay).length}, waitingAvg: ${waitingAvg.toFixed(3)}, activeAvg: ${activeAvg.toFixed(3)}, health: ${JSON.stringify(health)}`);
-    //*/
-
-    /*
-    const waitingThresh = 0.33;
-    if (waitingAvg >= waitingThresh) {
-      --adjust;
-    } else if (waitingAvg <= waitingThresh - 0.25) {
-      ++adjust;
-    }
-    //*/
   }
   setInterval(doCheck, sampleMsec);
 
 };
-
-/*
-  if (false && adjust !== 0) {
-    // skip one start
-    if (adjust < 0) {
-      ++adjust;
-      --numChainsRunning;
-      return;
-    }
-    // one additional start
-    --adjust;
-    createChainJob(queue, config, numChainsRunning);
-    ++numChainsRunning;
-  }
-//*/
 
 const createChainJob = (queue, config, chain) => {
   const { stats, verbose, failPercent, fixedDelay, randomDelay } = config;
@@ -212,19 +169,20 @@ const createChainJob = (queue, config, chain) => {
 
   const job = queue.createJob({jobNumber, chain, delay, failme});
 
-  /*
-  const cleanup = () => job.removeAllListeners();
+  //*
+  //const cleanup = () => job.removeAllListeners();
+  //const cleanup = () => undefined;
 
   job.on('succeeded', async result => {
     verbose >= 2 && log(`job client 'succeeded': job.id: ${job.id}, job.data: ${JSON.stringify(job.data)}`);
     ++stats.numJobSucceeded;
-    cleanup();
+    //cleanup();
   });
 
   job.on('failed', async error => {
     verbose >= 2 && log(`job client 'failed': job.id: ${job.id}, job.data: ${JSON.stringify(job.data)}`);
     ++stats.numJobFailed;
-    cleanup();
+    //cleanup();
   });
   //*/
 
